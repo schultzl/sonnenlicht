@@ -1,0 +1,8 @@
+week_from,week_to,total_sleep_min_h,total_sleep_max_h,wake_window_min,wake_window_max,naps,nap_length_min,nap_length_max,notes,source
+0,3,15,18,30,60,4-6+,30,240,Neugeborenenschlaf ist unregelmäßig – Nickerchen zwischen 30 Minuten und 4 Stunden sind normal,AAP/NHS
+4,11,14,17,60,90,4-5,30,120,Tag-Nacht-Rhythmus beginnt sich zu entwickeln,AAP/NHS
+12,25,12,16,90,150,3-4,45,120,Nickerchen beginnen sich zu festen Schlafzeiten zu bündeln,AAP/NHS
+26,38,12,15,120,180,2-3,60,120,Meist zwei bis drei feste Nickerchen (vormittags/mittags/nachmittags),AAP/NHS
+39,52,12,15,150,240,2,60,90,Übergang auf zwei Nickerchen; Nachtschlaf wird stabiler,AAP/NHS
+53,78,11,14,240,300,1-2,60,150,Übergang von zwei auf ein Mittagsschlaf (oft um 15–18 Monate),AAP/NHS
+79,104,11,14,300,360,1,90,180,Ein Mittagsschlaf; Gesamtschlaf 11–14 Stunden inkl. Nacht,AAP/NHS
