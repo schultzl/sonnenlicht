@@ -65,13 +65,15 @@ ruff check .
 
 ## Deployment auf Render
 
-1. **PostgreSQL-Instanz** anlegen, Internal Database URL kopieren
+1. **PostgreSQL-Datenbank** anlegen — wie beim WochenbettPlaner z. B. bei
+   [Neon](https://neon.tech) (kostenloses Kontingent), Connection-String
+   kopieren. Alternativ funktioniert auch Renders eigenes PostgreSQL.
 2. **Web Service** aus dem Repo anlegen:
    - Build command: `./build.sh`
    - Start command: `uvicorn sonnenlicht.web:app --host 0.0.0.0 --port $PORT`
 3. Environment-Variablen setzen:
-   - `DATABASE_URL` — die Postgres-URL (das `postgres://`-Schema wird
-     automatisch korrigiert)
+   - `DATABASE_URL` — die Postgres-URL von Neon (ein evtl. `postgres://`-Schema
+     wird automatisch korrigiert)
    - `SECRET_KEY` — langer zufälliger String für die JWT-Signierung
    - `PYTHON_VERSION` — z. B. `3.11.9`
 
