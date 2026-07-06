@@ -1,7 +1,8 @@
 # SONNENLICHT — Baby Development Tracker
 
 Expanded plan, based on the original MVP draft, adapted to the WochenbettPlaner
-architecture (FastAPI + React, JWT login, SQLite locally / PostgreSQL on Render).
+architecture (FastAPI + React, JWT login, SQLite locally / PostgreSQL via Neon
+in production, hosted on Render).
 
 ## Goal
 
@@ -25,7 +26,7 @@ architecture. Instead:
 |------------|---------------------------------------|---------------------------|
 | Backend    | FastAPI + uvicorn                     | yes |
 | Auth       | JWT bearer tokens, bcrypt, python-jose| yes — `auth.py` reusable nearly verbatim |
-| ORM / DB   | SQLAlchemy 2 · SQLite locally, PostgreSQL on Render (`DATABASE_URL`, incl. `postgres://` → `postgresql://` fix) | yes |
+| ORM / DB   | SQLAlchemy 2 · SQLite locally, PostgreSQL on Neon in production (`DATABASE_URL`, incl. `postgres://` → `postgresql://` fix) | yes |
 | Frontend   | React 18 + Vite + Tailwind CSS + lucide-react | yes |
 | Charts     | **Recharts** (React-native, small, supports range-area bands) | new — WochenbettPlaner has no charts |
 | Data prep  | Plain CSV, loaded with `csv`/`pandas` at startup, cached in memory | new |
@@ -193,8 +194,9 @@ deviations can look alarming while being normal, and vice versa.
 
 - Web Service: build command `./build.sh`, start command
   `uvicorn sonnenlicht.web:app --host 0.0.0.0 --port $PORT`
-- Render PostgreSQL instance → `DATABASE_URL` env var (the `postgres://`
-  scheme fix in `database.py` handles Render's URL format)
+- PostgreSQL on [Neon](https://neon.tech) (free tier) → connection string as
+  `DATABASE_URL` env var (the `postgres://` scheme fix in `database.py`
+  handles the URL format; Render's own PostgreSQL works as an alternative)
 - `SECRET_KEY` env var set in Render dashboard (never the default)
 - `create_tables()` at import time, like WochenbettPlaner (fine at this scale;
   Alembic only if the schema starts churning)
@@ -219,7 +221,7 @@ deviations can look alarming while being normal, and vice versa.
    Tagen"), Tailwind theming (warm "Sonnenlicht" palette: soft yellow/amber
    accents), empty states, disclaimer, mobile layout check (this will be used
    on a phone at 3 a.m.).
-7. **Deploy** — Render service + Postgres, `build.sh`, smoke test.
+7. **Deploy** — Render service + Neon Postgres, `build.sh`, smoke test.
 
 ## Later (not MVP)
 

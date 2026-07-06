@@ -24,7 +24,8 @@ if DATABASE_URL.startswith("sqlite:///"):
     Path(_db_file).parent.mkdir(parents=True, exist_ok=True)
 
 _connect_args = {"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
-engine = create_engine(DATABASE_URL, connect_args=_connect_args)
+# pool_pre_ping: Neon suspends idle databases; revalidate pooled connections
+engine = create_engine(DATABASE_URL, connect_args=_connect_args, pool_pre_ping=True)
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 Base = declarative_base()
 
