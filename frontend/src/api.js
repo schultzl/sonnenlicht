@@ -51,6 +51,12 @@ export const api = {
   resetPassword: (token, new_password) =>
     authReq('POST', '/auth/reset-password', { token, new_password }),
 
+  // Account linking
+  getLink: () => req('GET', '/link'),
+  createLinkCode: () => req('POST', '/link/code'),
+  linkAccount: (code) => req('POST', '/link', { code }),
+  unlink: () => req('DELETE', '/link'),
+
   // Children
   getChildren: () => req('GET', '/children'),
   createChild: (data) => req('POST', '/children', data),

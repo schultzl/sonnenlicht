@@ -55,6 +55,18 @@ class Child(Base):
     )
 
 
+class AccountLink(Base):
+    """Symmetric link between two user accounts (e.g. both parents).
+
+    Linked users see and edit each other's children. One link per user;
+    a user may appear in either column, which is enforced in the web layer.
+    """
+    __tablename__ = "account_links"
+    id = Column(Integer, primary_key=True)
+    user_a_id = Column(Integer, ForeignKey("users.id"), nullable=False, unique=True)
+    user_b_id = Column(Integer, ForeignKey("users.id"), nullable=False, unique=True)
+
+
 class WeightEntry(Base):
     __tablename__ = "weight_entries"
     __table_args__ = (UniqueConstraint("child_id", "measured_on"),)

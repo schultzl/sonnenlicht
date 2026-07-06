@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Sun, Moon, TrendingUp, LogOut } from 'lucide-react'
+import { Sun, Moon, TrendingUp, LogOut, Users } from 'lucide-react'
 import { api, getToken, clearToken } from './api'
 import AuthForm from './components/AuthForm'
 import ResetPassword from './components/ResetPassword'
+import LinkAccounts from './components/LinkAccounts'
 import ProfileSetup from './components/ProfileSetup'
 import Overview from './components/Overview'
 import SleepPhases from './components/SleepPhases'
@@ -21,6 +22,7 @@ export default function App() {
   )
   const [activeTab, setActiveTab] = useState('overview')
   const [children, setChildren] = useState(null)
+  const [showLink, setShowLink] = useState(false)
   const [error, setError] = useState(null)
 
   // Listen for token expiry dispatched by api.js on 401 responses
@@ -85,14 +87,24 @@ export default function App() {
               <h1 className="text-xl font-bold text-gray-900">Sonnenlicht</h1>
               {child && <span className="text-sm text-gray-400 mt-0.5">· {child.name}</span>}
             </div>
-            <button
-              onClick={handleLogout}
-              title="Abmelden"
-              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-            >
-              <LogOut size={15} />
-              <span className="hidden sm:inline">Abmelden</span>
-            </button>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setShowLink(true)}
+                title="Konto verknüpfen"
+                className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <Users size={15} />
+                <span className="hidden sm:inline">Verknüpfen</span>
+              </button>
+              <button
+                onClick={handleLogout}
+                title="Abmelden"
+                className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <LogOut size={15} />
+                <span className="hidden sm:inline">Abmelden</span>
+              </button>
+            </div>
           </div>
           {/* Tabs */}
           {child && (
@@ -135,6 +147,10 @@ export default function App() {
           </>
         )}
       </main>
+
+      {showLink && (
+        <LinkAccounts onClose={() => setShowLink(false)} onChanged={refresh} />
+      )}
 
       {/* Footer */}
       <footer className="max-w-3xl mx-auto px-4 py-6 w-full">

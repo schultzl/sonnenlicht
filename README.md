@@ -20,6 +20,9 @@ auf Render.
 - „Zugangsdaten vergessen": E-Mail mit Benutzername + Link zum
   Passwort-Zurücksetzen (30 Min gültig; ohne SMTP-Konfiguration wird die Mail
   lokal nur ins Server-Log geschrieben)
+- **Konto-Verknüpfung** — zwei Konten (z. B. beide Elternteile) verknüpfen
+  sich per Einladungscode (48 h gültig) und sehen/pflegen dieselben
+  Kind-Profile gemeinsam; jederzeit wieder lösbar
 
 ## Stack
 
@@ -90,8 +93,8 @@ ruff check .
 
 ```
 sonnenlicht/
-  database.py   — SQLAlchemy-Engine + Modelle (User, Child, WeightEntry)
-  auth.py       — bcrypt-Hashing + JWT erstellen/prüfen (Session- & Reset-Tokens)
+  database.py   — SQLAlchemy-Engine + Modelle (User, Child, WeightEntry, AccountLink)
+  auth.py       — bcrypt-Hashing + JWT erstellen/prüfen (Session-, Reset- & Link-Tokens)
   mailer.py     — SMTP-Versand (Env-Konfiguration, lokal Log-Fallback)
   age.py        — Alterberechnung (pure)
   sleep.py      — Schlafphasen-Lookup aus CSV (pure)
@@ -108,6 +111,7 @@ frontend/
   src/components/
     AuthForm.jsx           — Login/Registrierung/Zugangsdaten vergessen
     ResetPassword.jsx      — neues Passwort setzen (via Mail-Link ?reset=…)
+    LinkAccounts.jsx       — Konten verknüpfen (Einladungscode erstellen/einlösen)
     ProfileSetup.jsx       — Erststart: Name, Geburtsdatum, Geschlecht
     Overview.jsx           — Tab 1: Metrik-Karten + Schlafprofil
     SleepPhases.jsx        — Tab 2: Referenztabelle + Wochen-Slider

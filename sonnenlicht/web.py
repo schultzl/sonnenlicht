@@ -12,14 +12,23 @@ from sqlalchemy.orm import Session
 from sonnenlicht import growth
 from sonnenlicht.age import age_in_days, weeks_and_days
 from sonnenlicht.auth import (
+    create_link_code,
     create_reset_token,
     create_token,
+    decode_link_code,
     decode_reset_token,
     decode_token,
     hash_password,
     verify_password,
 )
-from sonnenlicht.database import Child, SessionLocal, User, WeightEntry, create_tables
+from sonnenlicht.database import (
+    AccountLink,
+    Child,
+    SessionLocal,
+    User,
+    WeightEntry,
+    create_tables,
+)
 from sonnenlicht.mailer import send_email
 from sonnenlicht.sleep import bracket_for_week, load_sleep_table
 
@@ -81,6 +90,9 @@ class ResetPasswordRequest(BaseModel):
     token: str
     new_password: str
 
+class LinkRequest(BaseModel):
+    code: str
+
 class CreateChildRequest(BaseModel):
     name: str
     birth_date: date
@@ -121,8 +133,35 @@ def _entry_dict(entry: WeightEntry, child: Child) -> dict:
     }
 
 
+def _find_link(user_id: int, db: Session) -> AccountLink | None:
+    return (
+        db.query(AccountLink)
+        .filter((AccountLink.user_a_id == user_id) | (AccountLink.user_b_id == user_id))
+        .first()
+    )
+
+
+def _partner(user: User, db: Session) -> User | None:
+    link = _find_link(user.id, db)
+    if link is None:
+        return None
+    partner_id = link.user_b_id if link.user_a_id == user.id else link.user_a_id
+    return db.query(User).filter(User.id == partner_id).first()
+
+
+def _allowed_user_ids(user: User, db: Session) -> list[int]:
+    """The user's own id plus the linked partner's, if any — children of
+    either account are visible and editable for both."""
+    partner = _partner(user, db)
+    return [user.id] if partner is None else [user.id, partner.id]
+
+
 def _get_child(child_id: int, user: User, db: Session) -> Child:
-    child = db.query(Child).filter(Child.id == child_id, Child.user_id == user.id).first()
+    child = (
+        db.query(Child)
+        .filter(Child.id == child_id, Child.user_id.in_(_allowed_user_ids(user, db)))
+        .first()
+    )
     if child is None:
         raise HTTPException(404, "Child not found")
     return child
@@ -212,13 +251,68 @@ def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
     return {"access_token": create_token(user.id), "token_type": "bearer"}
 
 
+# --- Account linking ---
+
+@app.get("/api/link")
+def get_link(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    partner = _partner(current_user, db)
+    if partner is None:
+        return {"linked": False, "partner_username": None}
+    return {"linked": True, "partner_username": partner.username}
+
+
+@app.post("/api/link/code")
+def new_link_code(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if _find_link(current_user.id, db) is not None:
+        raise HTTPException(409, "Account is already linked")
+    return {"code": create_link_code(current_user.id)}
+
+
+@app.post("/api/link")
+def link_account(
+    req: LinkRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    inviter_id = decode_link_code(req.code.strip())
+    if inviter_id is None:
+        raise HTTPException(400, "Invalid or expired link code")
+    if inviter_id == current_user.id:
+        raise HTTPException(422, "Cannot link an account with itself")
+    inviter = db.query(User).filter(User.id == inviter_id).first()
+    if inviter is None:
+        raise HTTPException(400, "Invalid or expired link code")
+    if _find_link(current_user.id, db) is not None or _find_link(inviter.id, db) is not None:
+        raise HTTPException(409, "One of the accounts is already linked")
+    db.add(AccountLink(user_a_id=inviter.id, user_b_id=current_user.id))
+    db.commit()
+    return {"linked": True, "partner_username": inviter.username}
+
+
+@app.delete("/api/link")
+def unlink_account(
+    current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
+):
+    link = _find_link(current_user.id, db)
+    if link is None:
+        raise HTTPException(404, "Account is not linked")
+    db.delete(link)
+    db.commit()
+    return {"ok": True}
+
+
 # --- Children ---
 
 @app.get("/api/children")
 def list_children(
     current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
-    children = db.query(Child).filter(Child.user_id == current_user.id).order_by(Child.id).all()
+    children = (
+        db.query(Child)
+        .filter(Child.user_id.in_(_allowed_user_ids(current_user, db)))
+        .order_by(Child.id)
+        .all()
+    )
     return [_child_dict(c) for c in children]
 
 
@@ -350,7 +444,10 @@ def delete_weight(
     entry = (
         db.query(WeightEntry)
         .join(Child)
-        .filter(WeightEntry.id == entry_id, Child.user_id == current_user.id)
+        .filter(
+            WeightEntry.id == entry_id,
+            Child.user_id.in_(_allowed_user_ids(current_user, db)),
+        )
         .first()
     )
     if entry is None:

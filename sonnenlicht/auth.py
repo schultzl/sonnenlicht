@@ -8,6 +8,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "change-this-in-production")
 ALGORITHM = "HS256"
 _TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 1 week
 _RESET_TOKEN_EXPIRE_MINUTES = 30
+_LINK_CODE_EXPIRE_HOURS = 48
 
 
 def hash_password(password: str) -> str:
@@ -53,5 +54,22 @@ def decode_reset_token(token: str) -> tuple[int, str] | None:
         if payload.get("purpose") != "reset":
             return None
         return int(payload["sub"]), payload["pwh"]
+    except (JWTError, KeyError, ValueError):
+        return None
+
+
+def create_link_code(user_id: int) -> str:
+    expire = datetime.now(timezone.utc) + timedelta(hours=_LINK_CODE_EXPIRE_HOURS)
+    payload = {"sub": str(user_id), "purpose": "link", "exp": expire}
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def decode_link_code(code: str) -> int | None:
+    """Return the inviting user's id, or None if invalid/expired."""
+    try:
+        payload = jwt.decode(code, SECRET_KEY, algorithms=[ALGORITHM])
+        if payload.get("purpose") != "link":
+            return None
+        return int(payload["sub"])
     except (JWTError, KeyError, ValueError):
         return None
