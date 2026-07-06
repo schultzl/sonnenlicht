@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Sun, Moon, TrendingUp, LogOut } from 'lucide-react'
 import { api, getToken, clearToken } from './api'
 import AuthForm from './components/AuthForm'
+import ResetPassword from './components/ResetPassword'
 import ProfileSetup from './components/ProfileSetup'
 import Overview from './components/Overview'
 import SleepPhases from './components/SleepPhases'
@@ -15,6 +16,9 @@ const TABS = [
 
 export default function App() {
   const [token, setTokenState] = useState(() => getToken())
+  const [resetToken, setResetToken] = useState(
+    () => new URLSearchParams(window.location.search).get('reset')
+  )
   const [activeTab, setActiveTab] = useState('overview')
   const [children, setChildren] = useState(null)
   const [error, setError] = useState(null)
@@ -47,6 +51,19 @@ export default function App() {
     clearToken()
     setTokenState(null)
     setChildren(null)
+  }
+
+  if (resetToken) {
+    return (
+      <ResetPassword
+        token={resetToken}
+        onDone={(newToken) => {
+          window.history.replaceState(null, '', window.location.pathname)
+          setResetToken(null)
+          setTokenState(newToken)
+        }}
+      />
+    )
   }
 
   if (!token) {

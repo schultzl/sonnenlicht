@@ -17,6 +17,9 @@ auf Render.
   WHO-Perzentilkorridor (P3–P97, P15–P85, P50) für Jungen/Mädchen,
   Perzentile pro Messung, Einträge löschbar
 - Login/Registrierung (JWT), Daten pro Konto getrennt
+- „Zugangsdaten vergessen": E-Mail mit Benutzername + Link zum
+  Passwort-Zurücksetzen (30 Min gültig; ohne SMTP-Konfiguration wird die Mail
+  lokal nur ins Server-Log geschrieben)
 
 ## Stack
 
@@ -76,13 +79,20 @@ ruff check .
      wird automatisch korrigiert)
    - `SECRET_KEY` — langer zufälliger String für die JWT-Signierung
    - `PYTHON_VERSION` — z. B. `3.11.9`
+   - Für den „Zugangsdaten vergessen"-Versand (sonst landen Reset-Mails nur im
+     Server-Log):
+     - `SMTP_HOST`, `SMTP_PORT` (587 = STARTTLS, 465 = SSL), `SMTP_USER`,
+       `SMTP_PASSWORD`, `SMTP_FROM` (Default: `SMTP_USER`)
+     - `APP_BASE_URL` — öffentliche URL des Service (z. B.
+       `https://sonnenlicht.onrender.com`), wird in die Reset-Links geschrieben
 
 ## Projektstruktur
 
 ```
 sonnenlicht/
   database.py   — SQLAlchemy-Engine + Modelle (User, Child, WeightEntry)
-  auth.py       — bcrypt-Hashing + JWT erstellen/prüfen
+  auth.py       — bcrypt-Hashing + JWT erstellen/prüfen (Session- & Reset-Tokens)
+  mailer.py     — SMTP-Versand (Env-Konfiguration, lokal Log-Fallback)
   age.py        — Alterberechnung (pure)
   sleep.py      — Schlafphasen-Lookup aus CSV (pure)
   growth.py     — WHO-LMS-Mathematik: Perzentilen, z-Scores, Kurvenpunkte (pure)
@@ -96,7 +106,8 @@ frontend/
   src/api.js               — Token-Handling + ein fetch-Wrapper pro Endpoint
   src/App.jsx              — Auth-Gate + Tab-Shell
   src/components/
-    AuthForm.jsx           — Login/Registrierung
+    AuthForm.jsx           — Login/Registrierung/Zugangsdaten vergessen
+    ResetPassword.jsx      — neues Passwort setzen (via Mail-Link ?reset=…)
     ProfileSetup.jsx       — Erststart: Name, Geburtsdatum, Geschlecht
     Overview.jsx           — Tab 1: Metrik-Karten + Schlafprofil
     SleepPhases.jsx        — Tab 2: Referenztabelle + Wochen-Slider

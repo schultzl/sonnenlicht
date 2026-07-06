@@ -47,6 +47,9 @@ export const api = {
   login: (username, password) => authReq('POST', '/auth/login', { username, password }),
   register: (username, email, password) =>
     authReq('POST', '/auth/register', { username, email, password }),
+  forgotPassword: (email) => authReq('POST', '/auth/forgot-password', { email }),
+  resetPassword: (token, new_password) =>
+    authReq('POST', '/auth/reset-password', { token, new_password }),
 
   // Children
   getChildren: () => req('GET', '/children'),

@@ -1,7 +1,8 @@
+import os
 from datetime import date
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.staticfiles import StaticFiles
@@ -10,8 +11,16 @@ from sqlalchemy.orm import Session
 
 from sonnenlicht import growth
 from sonnenlicht.age import age_in_days, weeks_and_days
-from sonnenlicht.auth import create_token, decode_token, hash_password, verify_password
+from sonnenlicht.auth import (
+    create_reset_token,
+    create_token,
+    decode_reset_token,
+    decode_token,
+    hash_password,
+    verify_password,
+)
 from sonnenlicht.database import Child, SessionLocal, User, WeightEntry, create_tables
+from sonnenlicht.mailer import send_email
 from sonnenlicht.sleep import bracket_for_week, load_sleep_table
 
 create_tables()
@@ -64,6 +73,13 @@ class RegisterRequest(BaseModel):
 class LoginRequest(BaseModel):
     username: str
     password: str
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
 
 class CreateChildRequest(BaseModel):
     name: str
@@ -148,6 +164,51 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == username).first()
     if user is None or not verify_password(req.password, user.hashed_password):
         raise HTTPException(401, "Invalid credentials")
+    return {"access_token": create_token(user.id), "token_type": "bearer"}
+
+
+# Base URL used in reset links. Set explicitly rather than derived from the
+# request Host header, which a sender could spoof to poison reset mails.
+APP_BASE_URL = os.environ.get("APP_BASE_URL", "http://localhost:8000").rstrip("/")
+
+
+@app.post("/api/auth/forgot-password")
+def forgot_password(
+    req: ForgotPasswordRequest, background: BackgroundTasks, db: Session = Depends(get_db)
+):
+    email = req.email.strip().lower()
+    user = db.query(User).filter(User.email == email).first()
+    if user is not None:
+        token = create_reset_token(user.id, user.hashed_password)
+        link = f"{APP_BASE_URL}/?reset={token}"
+        body = (
+            f"Hallo,\n\n"
+            f"für dieses Sonnenlicht-Konto wurde das Zurücksetzen der Zugangsdaten "
+            f"angefordert.\n\n"
+            f"Dein Benutzername: {user.username}\n\n"
+            f"Neues Passwort setzen (Link ist 30 Minuten gültig):\n{link}\n\n"
+            f"Wenn du das nicht angefordert hast, kannst du diese E-Mail ignorieren — "
+            f"dein Passwort bleibt unverändert."
+        )
+        background.add_task(send_email, user.email, "Sonnenlicht — Zugangsdaten zurücksetzen", body)
+    # Always the same response, so the endpoint doesn't reveal which
+    # email addresses have an account.
+    return {"ok": True}
+
+
+@app.post("/api/auth/reset-password")
+def reset_password(req: ResetPasswordRequest, db: Session = Depends(get_db)):
+    if len(req.new_password) < 6:
+        raise HTTPException(422, "Password must be at least 6 characters")
+    decoded = decode_reset_token(req.token)
+    if decoded is None:
+        raise HTTPException(400, "Invalid or expired reset link")
+    user_id, pw_suffix = decoded
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None or not user.hashed_password.endswith(pw_suffix):
+        raise HTTPException(400, "Invalid or expired reset link")
+    user.hashed_password = hash_password(req.new_password)
+    db.commit()
     return {"access_token": create_token(user.id), "token_type": "bearer"}
 
 
