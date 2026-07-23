@@ -112,19 +112,20 @@ export default function App() {
           </div>
           {/* Tabs */}
           {child && (
-            <nav className="flex gap-1 -mb-px">
+            <nav className="flex gap-1 -mb-px overflow-x-auto">
               {TABS.map(({ id, label, Icon }) => (
                 <button
                   key={id}
                   onClick={() => setActiveTab(id)}
-                  className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+                  title={label}
+                  className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap shrink-0 transition-colors ${
                     activeTab === id
                       ? 'border-amber-500 text-amber-700'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
                   <Icon size={15} />
-                  {label}
+                  <span className="hidden sm:inline">{label}</span>
                 </button>
               ))}
             </nav>
