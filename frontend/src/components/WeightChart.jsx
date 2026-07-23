@@ -4,6 +4,9 @@ import {
   ComposedChart,
   Area,
   Line,
+  BarChart,
+  Bar,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -35,6 +38,28 @@ function ChartTooltip({ active, payload }) {
       <div className="text-gray-500">
         P50: {point.p50?.toLocaleString('de-DE')} kg
       </div>
+    </div>
+  )
+}
+
+function fmtDelta(grams) {
+  return `${grams >= 0 ? '+' : ''}${fmtGrams(grams)}`
+}
+
+function fmtDeltaDays(days) {
+  return days === 1 ? 'zum Vortag' : `in ${days} Tagen`
+}
+
+function DeltaTooltip({ active, payload }) {
+  if (!active || !payload || payload.length === 0) return null
+  const point = payload[0].payload
+  return (
+    <div className="bg-white border border-amber-200 rounded-lg shadow-sm px-3 py-2 text-sm">
+      <div className="font-medium text-gray-900">{fmtDate(point.date)}</div>
+      <div className={point.grams >= 0 ? 'text-emerald-600' : 'text-red-500'}>
+        {fmtDelta(point.grams)}
+      </div>
+      <div className="text-gray-400 text-xs">{fmtDeltaDays(point.days)}</div>
     </div>
   )
 }
@@ -111,6 +136,17 @@ export default function WeightChart({ child }) {
     })),
     ...weights.map((w) => ({ week: w.age_weeks, kg: w.weight_grams / 1000, entry: w })),
   ].sort((a, b) => a.week - b.week)
+
+  // Difference to the previous entry, one point per entry (skipping the first, which has none).
+  const deltas = weights.slice(1).map((w, i) => {
+    const prev = weights[i]
+    const days = Math.round(
+      (new Date(w.measured_on + 'T00:00:00') - new Date(prev.measured_on + 'T00:00:00')) /
+        86400000
+    )
+    return { id: w.id, week: w.age_weeks, date: w.measured_on, grams: w.weight_grams - prev.weight_grams, days }
+  })
+  const deltaById = new Map(deltas.map((d) => [d.id, d]))
 
   return (
     <div className="space-y-4">
@@ -249,28 +285,66 @@ export default function WeightChart({ child }) {
         </div>
       </div>
 
+      {/* Delta chart */}
+      {deltas.length > 0 && (
+        <div className="bg-white rounded-xl border border-amber-100 p-4 shadow-sm">
+          <h3 className="font-semibold text-gray-900 mb-1">Veränderung zum vorherigen Eintrag</h3>
+          <p className="text-sm text-gray-500 mb-4">
+            Gewichtsdifferenz zwischen aufeinanderfolgenden Einträgen.
+          </p>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={deltas} margin={{ top: 5, right: 10, bottom: 15, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+              <XAxis
+                type="number"
+                dataKey="week"
+                domain={[0, 'dataMax']}
+                tickCount={10}
+                label={{ value: 'Alter (Wochen)', position: 'insideBottom', offset: -8, fontSize: 12 }}
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis tick={{ fontSize: 12 }} width={44} tickFormatter={(v) => `${v} g`} />
+              <Tooltip content={<DeltaTooltip />} />
+              <Bar dataKey="grams" radius={[3, 3, 0, 0]}>
+                {deltas.map((d) => (
+                  <Cell key={d.id} fill={d.grams >= 0 ? '#0e7490' : '#dc2626'} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
       {/* Entry list */}
       {weights.length > 0 && (
         <div className="bg-white rounded-xl border border-amber-100 shadow-sm divide-y divide-gray-50">
-          {[...weights].reverse().map((w) => (
-            <div key={w.id} className="flex items-center justify-between px-4 py-3 text-sm">
-              <div className="flex items-baseline gap-3">
-                <span className="font-medium text-gray-900">{fmtGrams(w.weight_grams)}</span>
-                <span className="text-gray-500">{fmtDate(w.measured_on)}</span>
-                <span className="text-gray-400">Woche {Math.floor(w.age_days / 7)}</span>
-                {w.percentile != null && (
-                  <span className="text-amber-600">≈ P{Math.round(w.percentile)}</span>
-                )}
+          {[...weights].reverse().map((w) => {
+            const d = deltaById.get(w.id)
+            return (
+              <div key={w.id} className="flex items-center justify-between px-4 py-3 text-sm">
+                <div className="flex items-baseline gap-3">
+                  <span className="font-medium text-gray-900">{fmtGrams(w.weight_grams)}</span>
+                  {d && (
+                    <span className={d.grams >= 0 ? 'text-emerald-600' : 'text-red-500'}>
+                      {fmtDelta(d.grams)} ({fmtDeltaDays(d.days)})
+                    </span>
+                  )}
+                  <span className="text-gray-500">{fmtDate(w.measured_on)}</span>
+                  <span className="text-gray-400">Woche {Math.floor(w.age_days / 7)}</span>
+                  {w.percentile != null && (
+                    <span className="text-amber-600">≈ P{Math.round(w.percentile)}</span>
+                  )}
+                </div>
+                <button
+                  onClick={() => handleDelete(w.id)}
+                  title="Eintrag löschen"
+                  className="text-gray-400 hover:text-red-500 transition-colors"
+                >
+                  <Trash2 size={15} />
+                </button>
               </div>
-              <button
-                onClick={() => handleDelete(w.id)}
-                title="Eintrag löschen"
-                className="text-gray-400 hover:text-red-500 transition-colors"
-              >
-                <Trash2 size={15} />
-              </button>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
