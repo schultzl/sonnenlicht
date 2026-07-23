@@ -42,12 +42,8 @@ function ChartTooltip({ active, payload }) {
   )
 }
 
-function fmtDelta(grams) {
-  return `${grams >= 0 ? '+' : ''}${fmtGrams(grams)}`
-}
-
-function fmtDeltaDays(days) {
-  return days === 1 ? 'zum Vortag' : `in ${days} Tagen`
+function fmtDeltaPerDay(gramsPerDay) {
+  return `${gramsPerDay >= 0 ? '+' : ''}${fmtGrams(gramsPerDay)}/Tag`
 }
 
 function DeltaTooltip({ active, payload }) {
@@ -56,10 +52,12 @@ function DeltaTooltip({ active, payload }) {
   return (
     <div className="bg-white border border-amber-200 rounded-lg shadow-sm px-3 py-2 text-sm">
       <div className="font-medium text-gray-900">{fmtDate(point.date)}</div>
-      <div className={point.grams >= 0 ? 'text-emerald-600' : 'text-red-500'}>
-        {fmtDelta(point.grams)}
+      <div className={point.gramsPerDay >= 0 ? 'text-emerald-600' : 'text-red-500'}>
+        {fmtDeltaPerDay(point.gramsPerDay)}
       </div>
-      <div className="text-gray-400 text-xs">{fmtDeltaDays(point.days)}</div>
+      {point.days > 1 && (
+        <div className="text-gray-400 text-xs">Ø über {point.days} Tage seit letztem Eintrag</div>
+      )}
     </div>
   )
 }
@@ -137,14 +135,22 @@ export default function WeightChart({ child }) {
     ...weights.map((w) => ({ week: w.age_weeks, kg: w.weight_grams / 1000, entry: w })),
   ].sort((a, b) => a.week - b.week)
 
-  // Difference to the previous entry, one point per entry (skipping the first, which has none).
+  // Average daily change vs. the previous entry, one point per entry (skipping the
+  // first, which has none). Gaps of several days are assumed to be a continuous
+  // change, spread evenly across the days in between.
   const deltas = weights.slice(1).map((w, i) => {
     const prev = weights[i]
     const days = Math.round(
       (new Date(w.measured_on + 'T00:00:00') - new Date(prev.measured_on + 'T00:00:00')) /
         86400000
     )
-    return { id: w.id, week: w.age_weeks, date: w.measured_on, grams: w.weight_grams - prev.weight_grams, days }
+    return {
+      id: w.id,
+      week: w.age_weeks,
+      date: w.measured_on,
+      gramsPerDay: Math.round((w.weight_grams - prev.weight_grams) / days),
+      days,
+    }
   })
   const deltaById = new Map(deltas.map((d) => [d.id, d]))
 
@@ -290,7 +296,8 @@ export default function WeightChart({ child }) {
         <div className="bg-white rounded-xl border border-amber-100 p-4 shadow-sm">
           <h3 className="font-semibold text-gray-900 mb-1">Veränderung zum vorherigen Eintrag</h3>
           <p className="text-sm text-gray-500 mb-4">
-            Gewichtsdifferenz zwischen aufeinanderfolgenden Einträgen.
+            Durchschnittliche Gewichtsveränderung pro Tag zwischen aufeinanderfolgenden
+            Einträgen.
           </p>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={deltas} margin={{ top: 5, right: 10, bottom: 15, left: 0 }}>
@@ -303,11 +310,11 @@ export default function WeightChart({ child }) {
                 label={{ value: 'Alter (Wochen)', position: 'insideBottom', offset: -8, fontSize: 12 }}
                 tick={{ fontSize: 12 }}
               />
-              <YAxis tick={{ fontSize: 12 }} width={44} tickFormatter={(v) => `${v} g`} />
+              <YAxis tick={{ fontSize: 12 }} width={52} tickFormatter={(v) => `${v} g/Tag`} />
               <Tooltip content={<DeltaTooltip />} />
-              <Bar dataKey="grams" radius={[3, 3, 0, 0]}>
+              <Bar dataKey="gramsPerDay" radius={[3, 3, 0, 0]}>
                 {deltas.map((d) => (
-                  <Cell key={d.id} fill={d.grams >= 0 ? '#0e7490' : '#dc2626'} />
+                  <Cell key={d.id} fill={d.gramsPerDay >= 0 ? '#0e7490' : '#dc2626'} />
                 ))}
               </Bar>
             </BarChart>
@@ -325,8 +332,8 @@ export default function WeightChart({ child }) {
                 <div className="flex items-baseline gap-3">
                   <span className="font-medium text-gray-900">{fmtGrams(w.weight_grams)}</span>
                   {d && (
-                    <span className={d.grams >= 0 ? 'text-emerald-600' : 'text-red-500'}>
-                      {fmtDelta(d.grams)} ({fmtDeltaDays(d.days)})
+                    <span className={d.gramsPerDay >= 0 ? 'text-emerald-600' : 'text-red-500'}>
+                      {fmtDeltaPerDay(d.gramsPerDay)}
                     </span>
                   )}
                   <span className="text-gray-500">{fmtDate(w.measured_on)}</span>
