@@ -4,7 +4,6 @@ from pathlib import Path
 from sqlalchemy import (
     Column,
     Date,
-    DateTime,
     ForeignKey,
     Integer,
     String,
@@ -54,12 +53,6 @@ class Child(Base):
         cascade="all, delete-orphan",
         order_by="WeightEntry.measured_on",
     )
-    feeding_entries = relationship(
-        "FeedingEntry",
-        back_populates="child",
-        cascade="all, delete-orphan",
-        order_by="FeedingEntry.fed_at",
-    )
     milestone_achievements = relationship(
         "MilestoneAchievement",
         back_populates="child",
@@ -87,16 +80,6 @@ class WeightEntry(Base):
     measured_on = Column(Date, nullable=False)
     weight_grams = Column(Integer, nullable=False)
     child = relationship("Child", back_populates="weight_entries")
-
-
-class FeedingEntry(Base):
-    __tablename__ = "feeding_entries"
-    id = Column(Integer, primary_key=True)
-    child_id = Column(Integer, ForeignKey("children.id"), nullable=False, index=True)
-    fed_at = Column(DateTime, nullable=False)
-    amount_ml = Column(Integer, nullable=False)
-    milk_type = Column(String(20), nullable=False)  # 'breast' | 'formula'
-    child = relationship("Child", back_populates="feeding_entries")
 
 
 class MilestoneAchievement(Base):

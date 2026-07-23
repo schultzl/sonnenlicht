@@ -1,0 +1,9 @@
+week_from,week_to,meals_min,meals_max,volume_min_ml,volume_max_ml,notes,source
+0,0,8,10,30,70,Kolostrum in den ersten Tagen – kleine aber sehr nahrhafte Portionen,Herstellerangaben (Richtwerte)
+1,1,7,9,60,90,Die Trinkmenge steigt in der zweiten Lebenswoche schnell an,Herstellerangaben (Richtwerte)
+2,3,6,8,90,120,Ein regelmäßigerer Rhythmus beginnt sich einzupendeln,Herstellerangaben (Richtwerte)
+4,7,6,7,120,150,Größere Portionen bei etwas selteneren Mahlzeiten,Herstellerangaben (Richtwerte)
+8,12,5,6,150,180,Mahlzeiten werden weiter reduziert dafür ergiebiger,Herstellerangaben (Richtwerte)
+13,17,5,5,170,200,Ein stabiler 4-5-Stunden-Rhythmus ist üblich,Herstellerangaben (Richtwerte)
+18,25,4,5,190,220,Vorbereitung auf die Beikosteinführung ab dem 5.-6. Monat,Herstellerangaben (Richtwerte)
+26,104,3,4,200,240,Milch wird zunehmend durch Beikost ergänzt,Herstellerangaben (Richtwerte)

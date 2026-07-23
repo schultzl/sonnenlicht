@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { CalendarDays, Scale, Percent, Moon, Milk, Footprints } from 'lucide-react'
 import { api } from '../api'
-import { fmtGrams, fmtMl, fmtDate, fmtMinutesRange } from '../format'
+import { fmtGrams, fmtDate, fmtMinutesRange } from '../format'
 
 function MetricCard({ Icon, label, value, sub }) {
   return (
@@ -100,43 +100,32 @@ export default function Overview({ child }) {
         {sleep.notes && <p className="text-sm text-gray-500 mt-4">{sleep.notes}</p>}
       </div>
 
-      {/* Feeding summary for the current week */}
+      {/* Feeding guide for the current age */}
       <div className="bg-white rounded-xl border border-amber-100 p-5 shadow-sm">
         <div className="flex items-center gap-2 mb-4">
           <Milk size={16} className="text-amber-500" />
-          <h3 className="font-semibold text-gray-900">Fütterung (Woche {age.weeks})</h3>
+          <h3 className="font-semibold text-gray-900">
+            Fütterung in diesem Alter (Woche {feeding.week_from}
+            {feeding.week_to !== feeding.week_from && `–${feeding.week_to}`})
+          </h3>
         </div>
-        {feeding ? (
-          <dl className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-            <div>
-              <dt className="text-gray-500">Mahlzeiten</dt>
-              <dd className="font-semibold text-gray-900 mt-0.5">{feeding.meal_count}</dd>
-            </div>
-            <div>
-              <dt className="text-gray-500">Pro Tag</dt>
-              <dd className="font-semibold text-gray-900 mt-0.5">{feeding.meals_per_day}</dd>
-            </div>
-            <div>
-              <dt className="text-gray-500">Ø Menge</dt>
-              <dd className="font-semibold text-gray-900 mt-0.5">{fmtMl(feeding.avg_amount_ml)}</dd>
-            </div>
-            <div>
-              <dt className="text-gray-500">Nach Art</dt>
-              <dd className="font-semibold text-gray-900 mt-0.5">
-                {[
-                  feeding.avg_amount_by_type.breast != null &&
-                    `Muttermilch ${fmtMl(feeding.avg_amount_by_type.breast)}`,
-                  feeding.avg_amount_by_type.formula != null &&
-                    `Pre-Milch ${fmtMl(feeding.avg_amount_by_type.formula)}`,
-                ]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </dd>
-            </div>
-          </dl>
-        ) : (
-          <p className="text-sm text-gray-400">Noch keine Einträge in dieser Woche</p>
-        )}
+        <dl className="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <dt className="text-gray-500">Mahlzeiten pro Tag</dt>
+            <dd className="font-semibold text-gray-900 mt-0.5">
+              {feeding.meals_min === feeding.meals_max
+                ? feeding.meals_min
+                : `${feeding.meals_min}–${feeding.meals_max}`}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-gray-500">Menge pro Mahlzeit</dt>
+            <dd className="font-semibold text-gray-900 mt-0.5">
+              {feeding.volume_min_ml}–{feeding.volume_max_ml} ml
+            </dd>
+          </div>
+        </dl>
+        {feeding.notes && <p className="text-sm text-gray-500 mt-4">{feeding.notes}</p>}
       </div>
 
       {/* Milestones summary */}

@@ -72,10 +72,8 @@ export const api = {
   deleteWeight: (entryId) => req('DELETE', `/weights/${entryId}`),
   getGrowthCurve: (childId) => req('GET', `/children/${childId}/growth-curve`),
 
-  // Feeding
-  getFeedings: (childId) => req('GET', `/children/${childId}/feedings`),
-  addFeeding: (childId, data) => req('POST', `/children/${childId}/feedings`, data),
-  deleteFeeding: (entryId) => req('DELETE', `/feedings/${entryId}`),
+  // Feeding guide
+  getFeedingGuide: () => req('GET', '/feeding-guide'),
 
   // Milestones
   getMilestones: () => req('GET', '/milestones'),
