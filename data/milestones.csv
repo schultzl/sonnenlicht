@@ -1,0 +1,33 @@
+key,category,week_from,week_to,title,description,source
+s-2m-1,Sozial,8,16,Lächelt zurück,Lächelt wenn du es ansprichst oder anlächelst,CDC
+s-2m-2,Sozial,8,16,Beruhigt sich,Beruhigt sich wenn es angesprochen oder hochgenommen wird,CDC
+m-2m-1,Motorik,8,16,Hebt den Kopf,Hebt in Bauchlage kurz den Kopf,CDC
+m-2m-2,Motorik,8,16,Bewegt Arme und Beine,Bewegt beide Arme und beide Beine aktiv,CDC
+s-4m-1,Sozial,17,25,Sucht Aufmerksamkeit,Lächelt von sich aus um deine Aufmerksamkeit zu bekommen,CDC
+s-4m-2,Sozial,17,25,Lacht,Lacht wenn du versuchst es zum Lachen zu bringen,CDC
+m-4m-1,Motorik,17,25,Hält den Kopf stabil,Hält den Kopf ohne Unterstützung wenn es hochgehoben wird,CDC
+m-4m-2,Motorik,17,25,Stützt sich auf Unterarme,Drückt sich in Bauchlage auf die Unterarme hoch,CDC
+s-6m-1,Sozial,26,38,Kennt vertraute Personen,Erkennt vertraute Gesichter,CDC
+s-6m-2,Sozial,26,38,Lacht laut,Lacht hörbar und gerne,CDC
+m-6m-1,Motorik,26,38,Rollt sich um,Rollt sich von der Bauch- in die Rückenlage,CDC
+m-6m-2,Motorik,26,38,Stützt sich beim Sitzen,Stützt sich mit den Händen ab um sitzen zu bleiben,CDC
+s-9m-1,Sozial,39,51,Fremdelt,Ist bei fremden Personen zurückhaltend oder ängstlich,CDC
+s-9m-2,Sozial,39,51,Reagiert auf den eigenen Namen,Schaut wenn es beim Namen gerufen wird,CDC
+m-9m-1,Motorik,39,51,Setzt sich alleine hin,Kommt selbstständig in eine sitzende Position,CDC
+m-9m-2,Motorik,39,51,Sitzt frei,Sitzt ohne Unterstützung,CDC
+s-12m-1,Sozial,52,64,Spielt Fingerspiele mit,Spielt Spiele wie Patschhändchen mit,CDC
+s-12m-2,Sozial,52,64,Winkt zum Abschied,Winkt bewusst zum Abschied,CDC
+m-12m-1,Motorik,52,64,Zieht sich hoch,Zieht sich an Möbeln in den Stand,CDC
+m-12m-2,Motorik,52,64,Läuft an Möbeln entlang,Geht an Möbeln entlang (Cruising),CDC
+s-15m-1,Sozial,65,77,Ahmt andere Kinder nach,Macht beim Spielen nach was andere Kinder tun,CDC
+s-15m-2,Sozial,65,77,Zeigt dir Dinge,Zeigt dir einen Gegenstand den es mag,CDC
+m-15m-1,Motorik,65,77,Macht erste Schritte,Läuft ein paar Schritte alleine,CDC
+m-15m-2,Motorik,65,77,Isst mit den Fingern,Nimmt Nahrung selbstständig mit den Fingern auf,CDC
+s-18m-1,Sozial,78,103,Zeigt auf Interessantes,Zeigt mit dem Finger um dir etwas Interessantes zu zeigen,CDC
+s-18m-2,Sozial,78,103,Bleibt in deiner Nähe,Entfernt sich von dir schaut aber ob du in der Nähe bleibst,CDC
+m-18m-1,Motorik,78,103,Läuft frei,Läuft ohne sich festzuhalten,CDC
+m-18m-2,Motorik,78,103,Kritzelt,Hält einen Stift und kritzelt,CDC
+s-24m-1,Sozial,104,130,Bemerkt Gefühle anderer,Bemerkt wenn andere verletzt oder traurig sind,CDC
+s-24m-2,Sozial,104,130,Orientiert sich an dir,Schaut zu dir um zu sehen wie es in neuen Situationen reagieren soll,CDC
+m-24m-1,Motorik,104,130,Rennt,Rennt sicher,CDC
+m-24m-2,Motorik,104,130,Tritt einen Ball,Tritt einen Ball nach vorne,CDC

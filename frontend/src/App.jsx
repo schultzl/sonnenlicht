@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Sun, Moon, TrendingUp, LogOut, Users } from 'lucide-react'
+import { Sun, Moon, TrendingUp, Milk, Footprints, LogOut, Users } from 'lucide-react'
 import { api, getToken, clearToken } from './api'
 import AuthForm from './components/AuthForm'
 import ResetPassword from './components/ResetPassword'
@@ -8,11 +8,15 @@ import ProfileSetup from './components/ProfileSetup'
 import Overview from './components/Overview'
 import SleepPhases from './components/SleepPhases'
 import WeightChart from './components/WeightChart'
+import FeedingChart from './components/FeedingChart'
+import Milestones from './components/Milestones'
 
 const TABS = [
   { id: 'overview', label: 'Überblick', Icon: Sun },
   { id: 'sleep', label: 'Schlaf', Icon: Moon },
   { id: 'weight', label: 'Gewicht', Icon: TrendingUp },
+  { id: 'feeding', label: 'Fütterung', Icon: Milk },
+  { id: 'milestones', label: 'Meilensteine', Icon: Footprints },
 ]
 
 export default function App() {
@@ -144,6 +148,8 @@ export default function App() {
             {activeTab === 'overview' && <Overview child={child} />}
             {activeTab === 'sleep' && <SleepPhases child={child} />}
             {activeTab === 'weight' && <WeightChart child={child} />}
+            {activeTab === 'feeding' && <FeedingChart child={child} />}
+            {activeTab === 'milestones' && <Milestones child={child} />}
           </>
         )}
       </main>

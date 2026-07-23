@@ -1,5 +1,5 @@
 import os
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
@@ -24,18 +24,24 @@ from sonnenlicht.auth import (
 from sonnenlicht.database import (
     AccountLink,
     Child,
+    FeedingEntry,
+    MilestoneAchievement,
     SessionLocal,
     User,
     WeightEntry,
     create_tables,
 )
 from sonnenlicht.mailer import send_email
+from sonnenlicht.milestones import load_milestones, relevant_for_week
 from sonnenlicht.sleep import bracket_for_week, load_sleep_table
 
 create_tables()
 
 SLEEP_TABLE = load_sleep_table()
 LMS = {"m": growth.load_lms("m"), "f": growth.load_lms("f")}
+MILESTONES = load_milestones()
+MILESTONE_KEYS = {row["key"] for row in MILESTONES}
+MILK_TYPES = ("breast", "formula")
 
 app = FastAPI(title="Sonnenlicht")
 
@@ -107,6 +113,14 @@ class AddWeightRequest(BaseModel):
     measured_on: date
     weight_grams: int
 
+class AddFeedingRequest(BaseModel):
+    fed_at: datetime
+    amount_ml: int
+    milk_type: str
+
+class SetMilestoneRequest(BaseModel):
+    achieved_on: date
+
 
 # --- Helpers ---
 
@@ -130,6 +144,46 @@ def _entry_dict(entry: WeightEntry, child: Child) -> dict:
         "age_weeks": round(days / 7, 2),
         "z": assessment["z"] if assessment else None,
         "percentile": assessment["percentile"] if assessment else None,
+    }
+
+
+def _feeding_entry_dict(entry: FeedingEntry, child: Child) -> dict:
+    days = age_in_days(child.birth_date, entry.fed_at.date())
+    return {
+        "id": entry.id,
+        "fed_at": entry.fed_at.isoformat(),
+        "amount_ml": entry.amount_ml,
+        "milk_type": entry.milk_type,
+        "age_days": days,
+        "age_weeks": days // 7,
+    }
+
+
+def _feeding_summary(entries: list[FeedingEntry], birth_date: date, week: int) -> dict | None:
+    """Meal count and average amount per meal for a given week of life."""
+    week_entries = [e for e in entries if age_in_days(birth_date, e.fed_at.date()) // 7 == week]
+    if not week_entries:
+        return None
+    days_with_data = len({e.fed_at.date() for e in week_entries})
+    by_type: dict[str, list[int]] = {}
+    for e in week_entries:
+        by_type.setdefault(e.milk_type, []).append(e.amount_ml)
+    return {
+        "week": week,
+        "meal_count": len(week_entries),
+        "meals_per_day": round(len(week_entries) / days_with_data, 1),
+        "avg_amount_ml": round(sum(e.amount_ml for e in week_entries) / len(week_entries)),
+        "avg_amount_by_type": {t: round(sum(v) / len(v)) for t, v in by_type.items()},
+    }
+
+
+def _milestones_summary(achievements: list[MilestoneAchievement], week: int) -> dict:
+    achieved_keys = {a.milestone_key for a in achievements}
+    relevant = relevant_for_week(MILESTONES, week)
+    return {
+        "achieved_count": len(achieved_keys),
+        "total_count": len(MILESTONES),
+        "relevant_not_achieved": [m for m in relevant if m["key"] not in achieved_keys],
     }
 
 
@@ -388,6 +442,8 @@ def overview(
         "age": {"total_days": total_days, "weeks": weeks, "days": days},
         "sleep": bracket_for_week(SLEEP_TABLE, weeks),
         "weight": weight,
+        "feeding": _feeding_summary(child.feeding_entries, child.birth_date, weeks),
+        "milestones": _milestones_summary(child.milestone_achievements, weeks),
     }
 
 
@@ -452,6 +508,140 @@ def delete_weight(
     )
     if entry is None:
         raise HTTPException(404, "Entry not found")
+    db.delete(entry)
+    db.commit()
+    return {"ok": True}
+
+
+# --- Feeding entries ---
+
+@app.get("/api/children/{child_id}/feedings")
+def list_feedings(
+    child_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    child = _get_child(child_id, current_user, db)
+    return [_feeding_entry_dict(e, child) for e in child.feeding_entries]
+
+
+@app.post("/api/children/{child_id}/feedings", status_code=201)
+def add_feeding(
+    child_id: int,
+    req: AddFeedingRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    child = _get_child(child_id, current_user, db)
+    if req.milk_type not in MILK_TYPES:
+        raise HTTPException(422, "milk_type must be 'breast' or 'formula'")
+    if req.fed_at.date() < child.birth_date:
+        raise HTTPException(422, "Feeding time is before the birth date")
+    if req.fed_at > datetime.now():
+        raise HTTPException(422, "Feeding time cannot be in the future")
+    if not 1 <= req.amount_ml <= 500:
+        raise HTTPException(422, "Amount must be between 1 ml and 500 ml")
+
+    entry = FeedingEntry(
+        child_id=child.id, fed_at=req.fed_at, amount_ml=req.amount_ml, milk_type=req.milk_type
+    )
+    db.add(entry)
+    db.commit()
+    db.refresh(entry)
+    return _feeding_entry_dict(entry, child)
+
+
+@app.delete("/api/feedings/{entry_id}")
+def delete_feeding(
+    entry_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    entry = (
+        db.query(FeedingEntry)
+        .join(Child)
+        .filter(
+            FeedingEntry.id == entry_id,
+            Child.user_id.in_(_allowed_user_ids(current_user, db)),
+        )
+        .first()
+    )
+    if entry is None:
+        raise HTTPException(404, "Entry not found")
+    db.delete(entry)
+    db.commit()
+    return {"ok": True}
+
+
+# --- Milestones ---
+
+@app.get("/api/milestones")
+def milestones_reference(current_user: User = Depends(get_current_user)):
+    return MILESTONES
+
+
+@app.get("/api/children/{child_id}/milestones")
+def list_milestone_achievements(
+    child_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    child = _get_child(child_id, current_user, db)
+    return [
+        {"milestone_key": a.milestone_key, "achieved_on": a.achieved_on.isoformat()}
+        for a in child.milestone_achievements
+    ]
+
+
+@app.put("/api/children/{child_id}/milestones/{key}")
+def set_milestone_achieved(
+    child_id: int,
+    key: str,
+    req: SetMilestoneRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    child = _get_child(child_id, current_user, db)
+    if key not in MILESTONE_KEYS:
+        raise HTTPException(404, "Unknown milestone")
+    if req.achieved_on > date.today():
+        raise HTTPException(422, "Achievement date cannot be in the future")
+    if req.achieved_on < child.birth_date:
+        raise HTTPException(422, "Achievement date is before the birth date")
+
+    entry = (
+        db.query(MilestoneAchievement)
+        .filter(
+            MilestoneAchievement.child_id == child.id, MilestoneAchievement.milestone_key == key
+        )
+        .first()
+    )
+    if entry is None:
+        entry = MilestoneAchievement(child_id=child.id, milestone_key=key, achieved_on=req.achieved_on)
+        db.add(entry)
+    else:
+        entry.achieved_on = req.achieved_on
+    db.commit()
+    return {"milestone_key": key, "achieved_on": req.achieved_on.isoformat()}
+
+
+@app.delete("/api/children/{child_id}/milestones/{key}")
+def unset_milestone_achieved(
+    child_id: int,
+    key: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    child = _get_child(child_id, current_user, db)
+    entry = (
+        db.query(MilestoneAchievement)
+        .filter(
+            MilestoneAchievement.child_id == child.id, MilestoneAchievement.milestone_key == key
+        )
+        .first()
+    )
+    if entry is None:
+        raise HTTPException(404, "Not marked as achieved")
     db.delete(entry)
     db.commit()
     return {"ok": True}

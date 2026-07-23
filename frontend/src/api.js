@@ -71,4 +71,17 @@ export const api = {
   addWeight: (childId, data) => req('POST', `/children/${childId}/weights`, data),
   deleteWeight: (entryId) => req('DELETE', `/weights/${entryId}`),
   getGrowthCurve: (childId) => req('GET', `/children/${childId}/growth-curve`),
+
+  // Feeding
+  getFeedings: (childId) => req('GET', `/children/${childId}/feedings`),
+  addFeeding: (childId, data) => req('POST', `/children/${childId}/feedings`, data),
+  deleteFeeding: (entryId) => req('DELETE', `/feedings/${entryId}`),
+
+  // Milestones
+  getMilestones: () => req('GET', '/milestones'),
+  getMilestoneAchievements: (childId) => req('GET', `/children/${childId}/milestones`),
+  setMilestoneAchieved: (childId, key, achieved_on) =>
+    req('PUT', `/children/${childId}/milestones/${key}`, { achieved_on }),
+  unsetMilestoneAchieved: (childId, key) =>
+    req('DELETE', `/children/${childId}/milestones/${key}`),
 }

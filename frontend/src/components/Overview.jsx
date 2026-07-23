@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { CalendarDays, Scale, Percent, Moon } from 'lucide-react'
+import { CalendarDays, Scale, Percent, Moon, Milk, Footprints } from 'lucide-react'
 import { api } from '../api'
-import { fmtGrams, fmtDate, fmtMinutesRange } from '../format'
+import { fmtGrams, fmtMl, fmtDate, fmtMinutesRange } from '../format'
 
 function MetricCard({ Icon, label, value, sub }) {
   return (
@@ -32,7 +32,7 @@ export default function Overview({ child }) {
     )
   if (!data) return <div className="text-center py-16 text-gray-400">Lädt…</div>
 
-  const { age, sleep, weight } = data
+  const { age, sleep, weight, feeding, milestones } = data
   const latest = weight?.latest
   const delta = weight?.delta
 
@@ -98,6 +98,77 @@ export default function Overview({ child }) {
           </div>
         </dl>
         {sleep.notes && <p className="text-sm text-gray-500 mt-4">{sleep.notes}</p>}
+      </div>
+
+      {/* Feeding summary for the current week */}
+      <div className="bg-white rounded-xl border border-amber-100 p-5 shadow-sm">
+        <div className="flex items-center gap-2 mb-4">
+          <Milk size={16} className="text-amber-500" />
+          <h3 className="font-semibold text-gray-900">Fütterung (Woche {age.weeks})</h3>
+        </div>
+        {feeding ? (
+          <dl className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+            <div>
+              <dt className="text-gray-500">Mahlzeiten</dt>
+              <dd className="font-semibold text-gray-900 mt-0.5">{feeding.meal_count}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">Pro Tag</dt>
+              <dd className="font-semibold text-gray-900 mt-0.5">{feeding.meals_per_day}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">Ø Menge</dt>
+              <dd className="font-semibold text-gray-900 mt-0.5">{fmtMl(feeding.avg_amount_ml)}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-500">Nach Art</dt>
+              <dd className="font-semibold text-gray-900 mt-0.5">
+                {[
+                  feeding.avg_amount_by_type.breast != null &&
+                    `Muttermilch ${fmtMl(feeding.avg_amount_by_type.breast)}`,
+                  feeding.avg_amount_by_type.formula != null &&
+                    `Pre-Milch ${fmtMl(feeding.avg_amount_by_type.formula)}`,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </dd>
+            </div>
+          </dl>
+        ) : (
+          <p className="text-sm text-gray-400">Noch keine Einträge in dieser Woche</p>
+        )}
+      </div>
+
+      {/* Milestones summary */}
+      <div className="bg-white rounded-xl border border-amber-100 p-5 shadow-sm">
+        <div className="flex items-center gap-2 mb-3">
+          <Footprints size={16} className="text-amber-500" />
+          <h3 className="font-semibold text-gray-900">Meilensteine</h3>
+        </div>
+        <p className="text-sm text-gray-700 mb-3">
+          <span className="font-semibold">{milestones.achieved_count}</span> von{' '}
+          <span className="font-semibold">{milestones.total_count}</span> erreicht
+        </p>
+        {milestones.relevant_not_achieved.length > 0 ? (
+          <ul className="space-y-1.5 text-sm">
+            {milestones.relevant_not_achieved.map((m) => (
+              <li key={m.key} className="flex items-center gap-2">
+                <span
+                  className={`text-xs px-1.5 py-0.5 rounded ${
+                    m.category === 'Motorik' ? 'bg-cyan-50 text-cyan-700' : 'bg-amber-50 text-amber-700'
+                  }`}
+                >
+                  {m.category}
+                </span>
+                <span className="text-gray-700">{m.title}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm text-gray-400">
+            Keine offenen Meilensteine für die aktuelle Woche
+          </p>
+        )}
       </div>
     </div>
   )
