@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { api } from '../api'
-import { fmtMinutesRange } from '../format'
+import { fmtMinutesRange, fmtMonthRange } from '../format'
 import { useAge } from '../useAge'
 import AgeInfo from './AgeInfo'
 
@@ -88,6 +88,9 @@ export default function SleepPhases({ child, onChildUpdated }) {
                 >
                   <td className="px-4 py-3 font-medium text-gray-900">
                     Woche {row.week_from}–{row.week_to}
+                    <span className="block text-xs font-normal text-gray-400">
+                      ≈ {fmtMonthRange(row.week_from, row.week_to)}
+                    </span>
                     {isActive && (
                       <span className="ml-2 text-xs bg-amber-500 text-white px-1.5 py-0.5 rounded">
                         Woche {week}

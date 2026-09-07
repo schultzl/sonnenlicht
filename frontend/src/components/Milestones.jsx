@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Award, Check } from 'lucide-react'
 import { api } from '../api'
-import { fmtDate } from '../format'
+import { fmtDate, fmtMonthRange } from '../format'
 import { useAge } from '../useAge'
 import AgeInfo from './AgeInfo'
 
@@ -151,6 +151,9 @@ export default function Milestones({ child, onChildUpdated }) {
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-semibold text-gray-900">
                 Woche {b.week_from}–{b.week_to}
+                <span className="ml-2 text-xs font-normal text-gray-400">
+                  ≈ {fmtMonthRange(b.week_from, b.week_to)}
+                </span>
               </h3>
               {isActive && (
                 <span className="text-xs bg-amber-500 text-white px-1.5 py-0.5 rounded">

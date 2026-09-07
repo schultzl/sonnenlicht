@@ -32,3 +32,17 @@ export const fmtMinutesRange = (lo, hi) =>
   lo >= 60 && hi >= 60
     ? `${(lo / 60).toLocaleString('de-DE', { maximumFractionDigits: 1 })}–${fmtMinutes(hi)}`
     : `${fmtMinutes(lo)} – ${fmtMinutes(hi)}`
+
+// Average calendar month length in weeks (365.25 / 12 / 7), used to give
+// reference-table week brackets an approximate month equivalent.
+const WEEKS_PER_MONTH = 4.348
+
+const monthLabel = (n) => `${n} ${n === 1 ? 'Monat' : 'Monate'}`
+
+// "0–1 Monate", "6 Monate" — approximate, since week brackets don't map
+// exactly onto calendar months.
+export function fmtMonthRange(weekFrom, weekTo) {
+  const from = Math.round(weekFrom / WEEKS_PER_MONTH)
+  const to = Math.round(weekTo / WEEKS_PER_MONTH)
+  return from === to ? monthLabel(from) : `${from}–${to} Monate`
+}

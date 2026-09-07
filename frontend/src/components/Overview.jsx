@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { CalendarDays, Scale, Percent, Moon, Milk, Footprints } from 'lucide-react'
 import { api } from '../api'
-import { fmtGrams, fmtDate, fmtMinutesRange } from '../format'
+import { fmtGrams, fmtDate, fmtMinutesRange, fmtMonthRange } from '../format'
 import AgeInfo from './AgeInfo'
 
 function MetricCard({ Icon, label, value, sub }) {
@@ -73,7 +73,8 @@ export default function Overview({ child, onChildUpdated }) {
         <div className="flex items-center gap-2 mb-4">
           <Moon size={16} className="text-amber-500" />
           <h3 className="font-semibold text-gray-900">
-            Schlaf in diesem Alter (Woche {sleep.week_from}–{sleep.week_to})
+            Schlaf in diesem Alter (Woche {sleep.week_from}–{sleep.week_to} · ≈{' '}
+            {fmtMonthRange(sleep.week_from, sleep.week_to)})
           </h3>
         </div>
         <dl className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
@@ -109,7 +110,8 @@ export default function Overview({ child, onChildUpdated }) {
           <Milk size={16} className="text-amber-500" />
           <h3 className="font-semibold text-gray-900">
             Fütterung in diesem Alter (Woche {feeding.week_from}
-            {feeding.week_to !== feeding.week_from && `–${feeding.week_to}`})
+            {feeding.week_to !== feeding.week_from && `–${feeding.week_to}`} · ≈{' '}
+            {fmtMonthRange(feeding.week_from, feeding.week_to)})
           </h3>
         </div>
         <dl className="grid grid-cols-2 gap-4 text-sm">
