@@ -82,6 +82,13 @@ export default function AgeInfo({ child, age, onChildUpdated }) {
             Vermutlich Sprung {age.leap.number}: {age.leap.name}
           </span>
         )}
+        {!age.leap && age.next_leap && (
+          <span className="flex items-center gap-1.5 text-sm text-gray-500 bg-gray-50 px-2.5 py-1 rounded-lg">
+            <Sparkles size={14} className="text-gray-400" />
+            Nächster Sprung {age.next_leap.number}: {age.next_leap.name} in ca.{' '}
+            {age.next_leap.days_until} {age.next_leap.days_until === 1 ? 'Tag' : 'Tagen'}
+          </span>
+        )}
       </div>
       {child.due_date ? (
         <button

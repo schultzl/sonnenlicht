@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Sun, Moon, TrendingUp, Milk, Footprints, LogOut, Users } from 'lucide-react'
+import { Sun, Moon, TrendingUp, Milk, Footprints, Sparkles, LogOut, Users } from 'lucide-react'
 import { api, getToken, clearToken } from './api'
 import AuthForm from './components/AuthForm'
 import ResetPassword from './components/ResetPassword'
@@ -10,6 +10,7 @@ import SleepPhases from './components/SleepPhases'
 import WeightChart from './components/WeightChart'
 import FeedingChart from './components/FeedingChart'
 import Milestones from './components/Milestones'
+import Leaps from './components/Leaps'
 
 const TABS = [
   { id: 'overview', label: 'Überblick', Icon: Sun },
@@ -17,6 +18,7 @@ const TABS = [
   { id: 'weight', label: 'Gewicht', Icon: TrendingUp },
   { id: 'feeding', label: 'Fütterung', Icon: Milk },
   { id: 'milestones', label: 'Meilensteine', Icon: Footprints },
+  { id: 'leaps', label: 'Sprünge', Icon: Sparkles },
 ]
 
 export default function App() {
@@ -151,6 +153,7 @@ export default function App() {
             {activeTab === 'weight' && <WeightChart child={child} onChildUpdated={refresh} />}
             {activeTab === 'feeding' && <FeedingChart child={child} onChildUpdated={refresh} />}
             {activeTab === 'milestones' && <Milestones child={child} onChildUpdated={refresh} />}
+            {activeTab === 'leaps' && <Leaps child={child} onChildUpdated={refresh} />}
           </>
         )}
       </main>

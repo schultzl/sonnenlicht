@@ -30,7 +30,7 @@ from sonnenlicht.database import (
     WeightEntry,
     create_tables,
 )
-from sonnenlicht.leaps import active_leap
+from sonnenlicht.leaps import active_leap, leaps_overview, next_leap
 from sonnenlicht.mailer import send_email
 from sonnenlicht.milestones import load_milestones, relevant_for_week
 from sonnenlicht.sleep import bracket_for_week, load_sleep_table
@@ -135,15 +135,16 @@ def _age_dict(child: Child, on: date) -> dict:
     total_days = age_in_days(child.birth_date, on)
     weeks, days = weeks_and_days(total_days)
     months, month_days = months_and_days(child.birth_date, on)
-    result = {
+    leap = active_leap(child.due_date, on) if child.due_date else None
+    return {
         "total_days": total_days,
         "weeks": weeks,
         "days": days,
         "months": months,
         "month_days": month_days,
-        "leap": active_leap(child.due_date, on) if child.due_date else None,
+        "leap": leap,
+        "next_leap": next_leap(child.due_date, on) if child.due_date and leap is None else None,
     }
-    return result
 
 
 def _entry_dict(entry: WeightEntry, child: Child) -> dict:
@@ -407,6 +408,13 @@ def sleep_phases(current_user: User = Depends(get_current_user)):
 @app.get("/api/feeding-guide")
 def feeding_guide(current_user: User = Depends(get_current_user)):
     return FEEDING_GUIDE
+
+
+# --- Developmental leaps (Entwicklungssprünge) ---
+
+@app.get("/api/leaps")
+def leaps_reference(current_user: User = Depends(get_current_user)):
+    return leaps_overview()
 
 
 # --- Overview ---

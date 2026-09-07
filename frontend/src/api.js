@@ -76,6 +76,9 @@ export const api = {
   // Feeding guide
   getFeedingGuide: () => req('GET', '/feeding-guide'),
 
+  // Developmental leaps
+  getLeaps: () => req('GET', '/leaps'),
+
   // Milestones
   getMilestones: () => req('GET', '/milestones'),
   getMilestoneAchievements: (childId) => req('GET', `/children/${childId}/milestones`),
