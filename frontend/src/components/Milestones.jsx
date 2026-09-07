@@ -15,9 +15,9 @@ function MilestoneRow({ m, achievedOn, onMark, onUnmark }) {
   const achieved = achievedOn != null
 
   return (
-    <div className="flex items-center justify-between gap-3 py-2.5">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 py-2.5">
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span
             className={`text-xs px-1.5 py-0.5 rounded shrink-0 ${
               m.category === 'Motorik' ? 'bg-cyan-50 text-cyan-700' : 'bg-amber-50 text-amber-700'
@@ -48,11 +48,11 @@ function MilestoneRow({ m, achievedOn, onMark, onUnmark }) {
             value={date}
             onChange={(e) => setDate(e.target.value)}
             max={today()}
-            className="px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
+            className="px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 min-w-0"
           />
           <button
             onClick={() => onMark(date)}
-            className="text-xs bg-amber-500 hover:bg-amber-600 text-white font-medium px-2 py-1.5 rounded transition-colors"
+            className="text-xs bg-amber-500 hover:bg-amber-600 text-white font-medium px-2 py-1.5 rounded transition-colors shrink-0"
           >
             Erreicht
           </button>

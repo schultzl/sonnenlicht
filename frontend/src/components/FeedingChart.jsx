@@ -65,8 +65,8 @@ export default function FeedingChart({ child, onChildUpdated }) {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-amber-100 shadow-sm overflow-x-auto">
+      {/* Table (tablet and up — narrower screens get a stacked card list instead) */}
+      <div className="hidden sm:block bg-white rounded-xl border border-amber-100 shadow-sm overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-gray-500 border-b border-gray-100">
@@ -110,6 +110,47 @@ export default function FeedingChart({ child, onChildUpdated }) {
             })}
           </tbody>
         </table>
+      </div>
+
+      {/* Card list (mobile) */}
+      <div className="sm:hidden bg-white rounded-xl border border-amber-100 shadow-sm divide-y divide-gray-50">
+        {table.map((row) => {
+          const isActive = row === active
+          return (
+            <div key={row.week_from} className={`p-4 ${isActive ? 'bg-amber-50' : ''}`}>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="font-medium text-gray-900">
+                  Woche {row.week_from}
+                  {row.week_to !== row.week_from && `–${row.week_to}`}
+                  <span className="block text-xs font-normal text-gray-400">
+                    ≈ {fmtMonthRange(row.week_from, row.week_to)}
+                  </span>
+                </div>
+                {isActive && (
+                  <span className="text-xs bg-amber-500 text-white px-1.5 py-0.5 rounded shrink-0">
+                    Woche {week}
+                  </span>
+                )}
+              </div>
+              <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm">
+                <div>
+                  <dt className="text-gray-400 text-xs">Mahlzeiten pro Tag</dt>
+                  <dd className="text-gray-700">
+                    {row.meals_min === row.meals_max
+                      ? row.meals_min
+                      : `${row.meals_min}–${row.meals_max}`}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-gray-400 text-xs">Menge pro Mahlzeit</dt>
+                  <dd className="text-gray-700">
+                    {row.volume_min_ml}–{row.volume_max_ml} ml
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          )
+        })}
       </div>
 
       <p className="text-sm text-gray-500 bg-white rounded-xl border border-amber-100 p-4 shadow-sm">

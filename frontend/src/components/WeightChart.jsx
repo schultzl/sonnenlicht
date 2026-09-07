@@ -333,8 +333,8 @@ export default function WeightChart({ child, onChildUpdated }) {
           {[...weights].reverse().map((w) => {
             const d = deltaById.get(w.id)
             return (
-              <div key={w.id} className="flex items-center justify-between px-4 py-3 text-sm">
-                <div className="flex items-baseline gap-3">
+              <div key={w.id} className="flex items-start justify-between gap-2 px-4 py-3 text-sm">
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                   <span className="font-medium text-gray-900">{fmtGrams(w.weight_grams)}</span>
                   {d && (
                     <span className={d.gramsPerDay >= 0 ? 'text-emerald-600' : 'text-red-500'}>
@@ -350,7 +350,7 @@ export default function WeightChart({ child, onChildUpdated }) {
                 <button
                   onClick={() => handleDelete(w.id)}
                   title="Eintrag löschen"
-                  className="text-gray-400 hover:text-red-500 transition-colors"
+                  className="text-gray-400 hover:text-red-500 transition-colors shrink-0"
                 >
                   <Trash2 size={15} />
                 </button>
