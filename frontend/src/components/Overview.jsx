@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { CalendarDays, Scale, Percent, Moon, Milk, Footprints } from 'lucide-react'
 import { api } from '../api'
 import { fmtGrams, fmtDate, fmtMinutesRange } from '../format'
+import AgeInfo from './AgeInfo'
 
 function MetricCard({ Icon, label, value, sub }) {
   return (
@@ -16,13 +17,13 @@ function MetricCard({ Icon, label, value, sub }) {
   )
 }
 
-export default function Overview({ child }) {
+export default function Overview({ child, onChildUpdated }) {
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
 
   useEffect(() => {
     api.getOverview(child.id).then(setData).catch((e) => setError(e.message))
-  }, [child.id])
+  }, [child.id, child.due_date])
 
   if (error)
     return (
@@ -38,6 +39,8 @@ export default function Overview({ child }) {
 
   return (
     <div className="space-y-4">
+      <AgeInfo child={child} age={age} onChildUpdated={onChildUpdated} />
+
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <MetricCard
           Icon={CalendarDays}

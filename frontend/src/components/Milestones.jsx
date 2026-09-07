@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { Award, Check } from 'lucide-react'
 import { api } from '../api'
 import { fmtDate } from '../format'
+import { useAge } from '../useAge'
+import AgeInfo from './AgeInfo'
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -60,10 +62,11 @@ function MilestoneRow({ m, achievedOn, onMark, onUnmark }) {
   )
 }
 
-export default function Milestones({ child }) {
+export default function Milestones({ child, onChildUpdated }) {
   const [table, setTable] = useState(null)
   const [achievements, setAchievements] = useState(null)
   const [error, setError] = useState(null)
+  const age = useAge(child)
 
   const refresh = useCallback(async () => {
     try {
@@ -121,6 +124,8 @@ export default function Milestones({ child }) {
 
   return (
     <div className="space-y-4">
+      {age && <AgeInfo child={child} age={age} onChildUpdated={onChildUpdated} />}
+
       {/* Progress summary */}
       <div className="bg-white rounded-xl border border-amber-100 p-4 shadow-sm flex items-center justify-between">
         <div>

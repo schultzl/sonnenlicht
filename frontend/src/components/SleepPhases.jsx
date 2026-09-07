@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react'
 import { api } from '../api'
 import { fmtMinutesRange } from '../format'
+import { useAge } from '../useAge'
+import AgeInfo from './AgeInfo'
 
 const currentWeek = (birthDate) =>
   Math.max(0, Math.floor((Date.now() - new Date(birthDate + 'T00:00:00')) / 604800000))
 
-export default function SleepPhases({ child }) {
+export default function SleepPhases({ child, onChildUpdated }) {
   const [table, setTable] = useState(null)
   const [error, setError] = useState(null)
   const [week, setWeek] = useState(() => Math.min(currentWeek(child.birth_date), 104))
+  const age = useAge(child)
 
   useEffect(() => {
     api.getSleepPhases().then(setTable).catch((e) => setError(e.message))
@@ -29,6 +32,8 @@ export default function SleepPhases({ child }) {
 
   return (
     <div className="space-y-4">
+      {age && <AgeInfo child={child} age={age} onChildUpdated={onChildUpdated} />}
+
       {/* Week selector */}
       <div className="bg-white rounded-xl border border-amber-100 p-5 shadow-sm">
         <div className="flex items-center justify-between mb-2">

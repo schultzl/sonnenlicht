@@ -15,6 +15,8 @@ import {
 } from 'recharts'
 import { api } from '../api'
 import { fmtGrams, fmtDate } from '../format'
+import { useAge } from '../useAge'
+import AgeInfo from './AgeInfo'
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -62,7 +64,7 @@ function DeltaTooltip({ active, payload }) {
   )
 }
 
-export default function WeightChart({ child }) {
+export default function WeightChart({ child, onChildUpdated }) {
   const [weights, setWeights] = useState(null)
   const [curve, setCurve] = useState(null)
   const [error, setError] = useState(null)
@@ -71,6 +73,7 @@ export default function WeightChart({ child }) {
   const [value, setValue] = useState('')
   const [unit, setUnit] = useState('g')
   const [saving, setSaving] = useState(false)
+  const age = useAge(child)
 
   const refresh = useCallback(async () => {
     try {
@@ -156,6 +159,8 @@ export default function WeightChart({ child }) {
 
   return (
     <div className="space-y-4">
+      {age && <AgeInfo child={child} age={age} onChildUpdated={onChildUpdated} />}
+
       {/* Entry form */}
       <form
         onSubmit={handleSubmit}

@@ -9,6 +9,8 @@ from sqlalchemy import (
     String,
     UniqueConstraint,
     create_engine,
+    inspect,
+    text,
 )
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
@@ -46,6 +48,9 @@ class Child(Base):
     name = Column(String(100), nullable=False)
     birth_date = Column(Date, nullable=False)
     sex = Column(String(1), nullable=False)  # 'm' | 'f'
+    # Expected due date (ET / Entbindungstermin) — optional, used to derive
+    # corrected age for developmental-leap detection. Nullable on purpose.
+    due_date = Column(Date, nullable=True)
     user = relationship("User", back_populates="children")
     weight_entries = relationship(
         "WeightEntry",
@@ -94,3 +99,15 @@ class MilestoneAchievement(Base):
 
 def create_tables() -> None:
     Base.metadata.create_all(bind=engine)
+    _ensure_due_date_column()
+
+
+def _ensure_due_date_column() -> None:
+    """`create_all` only creates missing tables, not missing columns on
+    tables that already exist — add `due_date` explicitly for databases
+    created before it existed."""
+    inspector = inspect(engine)
+    columns = {c["name"] for c in inspector.get_columns("children")}
+    if "due_date" not in columns:
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE children ADD COLUMN due_date DATE"))

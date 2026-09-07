@@ -146,11 +146,11 @@ export default function App() {
           <ProfileSetup onCreated={refresh} />
         ) : (
           <>
-            {activeTab === 'overview' && <Overview child={child} />}
-            {activeTab === 'sleep' && <SleepPhases child={child} />}
-            {activeTab === 'weight' && <WeightChart child={child} />}
-            {activeTab === 'feeding' && <FeedingChart child={child} />}
-            {activeTab === 'milestones' && <Milestones child={child} />}
+            {activeTab === 'overview' && <Overview child={child} onChildUpdated={refresh} />}
+            {activeTab === 'sleep' && <SleepPhases child={child} onChildUpdated={refresh} />}
+            {activeTab === 'weight' && <WeightChart child={child} onChildUpdated={refresh} />}
+            {activeTab === 'feeding' && <FeedingChart child={child} onChildUpdated={refresh} />}
+            {activeTab === 'milestones' && <Milestones child={child} onChildUpdated={refresh} />}
           </>
         )}
       </main>

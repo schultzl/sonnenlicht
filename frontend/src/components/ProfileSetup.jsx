@@ -7,6 +7,7 @@ const today = () => new Date().toISOString().slice(0, 10)
 export default function ProfileSetup({ onCreated }) {
   const [name, setName] = useState('')
   const [birthDate, setBirthDate] = useState('')
+  const [dueDate, setDueDate] = useState('')
   const [sex, setSex] = useState('f')
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -16,7 +17,7 @@ export default function ProfileSetup({ onCreated }) {
     setError(null)
     setLoading(true)
     try {
-      await api.createChild({ name, birth_date: birthDate, sex })
+      await api.createChild({ name, birth_date: birthDate, sex, due_date: dueDate || null })
       onCreated()
     } catch (err) {
       setError(err.message)
@@ -68,6 +69,21 @@ export default function ProfileSetup({ onCreated }) {
               max={today()}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Errechneter Termin (ET) <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              Wird genutzt, um mögliche Entwicklungssprünge anzuzeigen — kann später ergänzt werden.
+            </p>
           </div>
 
           <div>

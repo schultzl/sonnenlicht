@@ -64,6 +64,7 @@ export const api = {
 
   // Overview + sleep
   getOverview: (childId) => req('GET', `/children/${childId}/overview`),
+  getAge: (childId) => req('GET', `/children/${childId}/age`),
   getSleepPhases: () => req('GET', '/sleep-phases'),
 
   // Weight

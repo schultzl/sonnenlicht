@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from sonnenlicht import feeding, growth
-from sonnenlicht.age import age_in_days, weeks_and_days
+from sonnenlicht.age import age_in_days, months_and_days, weeks_and_days
 from sonnenlicht.auth import (
     create_link_code,
     create_reset_token,
@@ -30,6 +30,7 @@ from sonnenlicht.database import (
     WeightEntry,
     create_tables,
 )
+from sonnenlicht.leaps import active_leap
 from sonnenlicht.mailer import send_email
 from sonnenlicht.milestones import load_milestones, relevant_for_week
 from sonnenlicht.sleep import bracket_for_week, load_sleep_table
@@ -102,11 +103,13 @@ class CreateChildRequest(BaseModel):
     name: str
     birth_date: date
     sex: str
+    due_date: date | None = None
 
 class UpdateChildRequest(BaseModel):
     name: str | None = None
     birth_date: date | None = None
     sex: str | None = None
+    due_date: date | None = None
 
 class AddWeightRequest(BaseModel):
     measured_on: date
@@ -124,7 +127,23 @@ def _child_dict(child: Child) -> dict:
         "name": child.name,
         "birth_date": child.birth_date.isoformat(),
         "sex": child.sex,
+        "due_date": child.due_date.isoformat() if child.due_date else None,
     }
+
+
+def _age_dict(child: Child, on: date) -> dict:
+    total_days = age_in_days(child.birth_date, on)
+    weeks, days = weeks_and_days(total_days)
+    months, month_days = months_and_days(child.birth_date, on)
+    result = {
+        "total_days": total_days,
+        "weeks": weeks,
+        "days": days,
+        "months": months,
+        "month_days": month_days,
+        "leap": active_leap(child.due_date, on) if child.due_date else None,
+    }
+    return result
 
 
 def _entry_dict(entry: WeightEntry, child: Child) -> dict:
@@ -342,7 +361,11 @@ def create_child(
 ):
     _validate_child_fields(req.birth_date, req.sex, req.name)
     child = Child(
-        user_id=current_user.id, name=req.name.strip(), birth_date=req.birth_date, sex=req.sex
+        user_id=current_user.id,
+        name=req.name.strip(),
+        birth_date=req.birth_date,
+        sex=req.sex,
+        due_date=req.due_date,
     )
     db.add(child)
     db.commit()
@@ -365,6 +388,8 @@ def update_child(
         child.birth_date = req.birth_date
     if req.sex is not None:
         child.sex = req.sex
+    if "due_date" in req.model_fields_set:
+        child.due_date = req.due_date
     db.commit()
     db.refresh(child)
     return _child_dict(child)
@@ -393,8 +418,8 @@ def overview(
     db: Session = Depends(get_db),
 ):
     child = _get_child(child_id, current_user, db)
-    total_days = age_in_days(child.birth_date, date.today())
-    weeks, days = weeks_and_days(total_days)
+    age = _age_dict(child, date.today())
+    weeks = age["weeks"]
 
     entries = child.weight_entries
     weight = None
@@ -410,12 +435,22 @@ def overview(
 
     return {
         "child": _child_dict(child),
-        "age": {"total_days": total_days, "weeks": weeks, "days": days},
+        "age": age,
         "sleep": bracket_for_week(SLEEP_TABLE, weeks),
         "weight": weight,
         "feeding": feeding.bracket_for_week(FEEDING_GUIDE, weeks),
         "milestones": _milestones_summary(child.milestone_achievements, weeks),
     }
+
+
+@app.get("/api/children/{child_id}/age")
+def child_age(
+    child_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    child = _get_child(child_id, current_user, db)
+    return _age_dict(child, date.today())
 
 
 # --- Weight entries ---
